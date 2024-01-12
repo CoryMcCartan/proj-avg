@@ -1,5 +1,6 @@
 suppressPackageStartupMessages({
     library(dplyr)
+    library(purrr)
     library(ggplot2)
     library(scales)
     library(patchwork)
@@ -9,6 +10,7 @@ suppressPackageStartupMessages({
     library(alarmdata)
     library(ggredist)
     rlang::check_installed("rmapshaper", "for plotting")
+    rlang::check_installed("ggpattern", "for FDR plotting")
 
     library(matrixStats)
     library(here)
@@ -87,7 +89,8 @@ proj_distr <- function(plans, x, draws=NA) {
 }
 
 proj_contrast = function(plans, x, comp=1) {
-    d_enac = rlang::eval_tidy(rlang::enquo(x), plans)[1:attr(plans, "ndists")]
+    nd = attr(plans, "ndists")
+    d_enac = rlang::eval_tidy(rlang::enquo(x), plans)[(comp - 1)*nd + 1:nd]
     d_enac[as.matrix(plans)[, comp]] - rowMeans2(proj_distr(plans, {{ x }}))
 }
 proj_avg = function(plans, x) {

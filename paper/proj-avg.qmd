@@ -1,22 +1,21 @@
 ---
 title: Projective Averages for Summarizing Redistricting Ensembles
 abstract: |
-  A recurring challenge in the application of redistricting simulation 
+  A recurring challenge in the application of redistricting simulation
   algorithms lies in extracting useful summaries and comparisons from a large
-  ensemble districting plans, each of which is a complex discrete object.
-  Researchers often compute summary statistics for each district in a plan, and
-  then study the distribution of these summary statistics across plans in the
-  ensemble. This approach discards rich geographic information that is inherent
-  in districting plans. We introduce the projective average, an operation that
-  projects a district-level summary statistic back to the underlying geography
-  and then averages this statistic across plans in the ensemble. For example,
-  the projective average of districts' Democratic vote share would calculate the 
-  average Democratic vote share of the simulated district to which each precinct 
-  belongs. Compared to traditional district-level summaries,
-  projective averages are a powerful tool for geographically granular, 
-  sub-district analysis of districting plans along a variety of dimensions.
-  However, care must be taken to properly account for variation within 
-  redistricting ensembles, to avoid misleading conclusions.
+  ensemble of districting plans. Researchers often compute summary statistics for
+  each district in a plan, and then study their distribution across the
+  plans in the ensemble. This approach discards rich geographic information that
+  is inherent in districting plans. We introduce the projective average, an
+  operation that projects a district-level summary statistic back to the
+  underlying geography and then averages this statistic across plans in the
+  ensemble. Compared to traditional district-level summaries, projective
+  averages are a powerful tool for geographically granular, sub-district
+  analysis of districting plans along a variety of dimensions. However, care
+  must be taken to account for variation within redistricting ensembles, to
+  avoid misleading conclusions. We propose and validate a multiple-testing
+  procedure to control the probability of incorrectly identifying outlier plans
+  or regions when using projective averages.
 author:
   - name: Cory McCartan
     affiliations:
@@ -30,15 +29,13 @@ author:
     url: https://corymccartan.com/
     corresponding: true
 date: last-modified
-thanks: ""
-format:
+thanks: The author thanks Christopher T. Kenny and Kosuke Imai for helpful comments.
+format: 
   cmc-article-pdf:
     keep-tex: false
     journal:
       blinded: false
     include-in-header: header.tex
-filters:
-  - wordcount
 keywords:
   - redistricting simulation
   - gerrymandering
@@ -46,68 +43,43 @@ keywords:
 bibliography: references.bib 
 ---
 
-> **{{wordcountref}} words**
-
 # Introduction {#sec-intro}
 
-Redistricting simulation algorithms are widely used in both academic research on redistricting and in litigation over districting plans in the United States [see recently @deluca2023validating; @imai2023sc].
-Modern simulation algorithms are able to generate a large sample, or *ensemble*, of districting plans from a specific target distribution that incorporates real-world constraints on legislative districts [@recom; @mccartan2023; @autry2023metropolized; @cannon2022spanning].
+Redistricting simulation algorithms are widely used in both academic research on redistricting and in litigation over districting plans in the United States [see recently @imai2023sc].
+Modern simulation algorithms are able to generate a large sample, or *ensemble*, of districting plans from a specific target distribution that incorporates real-world constraints on legislative districts [most recently @mccartan2023; @autry2023metropolized; @cannon2022spanning].
 
-Redistricting ensembles are commonly compared against a specific plan of interest (usually, the plan enacted by a legislature) in order to probe for factors that affected the drawing of that plan.
+Redistricting ensembles are commonly compared against a specific plan (usually, the plan enacted by a legislature) in order to probe for factors that affected its drawing.
 This comparison is done on the basis of a number of district-level summary statistics.
-For instance, the Democratic vote share or the geographic compactness of each district in the enacted plan might be compared to the corresponding measures for the ensemble.
+For instance, the geographic compactness of each district in the enacted plan might be compared to the corresponding measures for the ensemble.
 If the statistics for the enacted plan are outliers in the distribution of the statistic from the ensemble, that can be evidence of intentional manipulation of the enacted plan away from the baseline represented by the ensemble.
 
 While analyses based on district-level statistics have been powerfully applied to identify gerrymanders, the district-level approach leaves something to be desired for the granular study of districting plans.
-Redistricting is an intrinsically geographic endeavor, yet geography makes no appearance in the district-level analysis: once the plans have been simulated, we switch our focus to properties of abstractly numbered districts.
-This is evident in the visualizations produced by district-level analyses, which are dominated by histograms and boxplots, not maps.
-District-level analyses are also fundamentally coarse---if there are, say, four districts, then all the information contained in a districting plan is boiled down to four numbers.
+Redistricting is an intrinsically geographic endeavor, yet geography makes no appearance in the district-level analysis: once the plans have been simulated, we switch our focus to properties of abstractly numbered districts, summarized with histograms and boxplots, not maps.
+District-level analyses are also fundamentally coarse---if there are, say, four districts, then the entire districting plan is boiled down to just four numbers.
 It's impossible to use a district-level analysis to conclude anything about the properties of a districting plan at much more local scales.
 
 This paper introduces the *projective average* as a universal operation for putting the geography back into district-level analyses.
 The projective average operates on the fundamental building blocks of districting plans: precincts, or in some states, counties.
-Informally, the projective average takes a district-level summary statistic and projects it back to the precinct level, producing a map, rather than a histogram or boxplot, that visualizes the summary statistic for the simulation ensemble.
+Informally, the projective average takes a district-level summary statistic and projects it back to the precinct level, producing a map that visualizes the summary statistic for the simulation ensemble.
 It achieves this by calculating the average value of that summary statistic in the various districts to which the precinct belongs across the ensemble.
 @sec-formal formalizes this operation and demonstrates how projective averages can be used to make comparisons between an ensemble and a specific plan of interest.
 
 Analyses using ideas similar to the projective average have appeared in past work.
-Comparing a projective average to a particular plan (what we term a *projective contrast*) recalls the notion of *partisan dislocation* of @deford2022partisan, where the partisan lean of a precinct's district is compared to an average over a number of nearby precincts But projective averages are built on top of simulation ensembles, while partisan dislocation is not.
-Moreover, partisan dislocation applies only to partisan vote shares, while projective averages may be applied to any summary statistic, such as compactness or racial composition.
-Despite these differences, other authors have referred to projective contrast maps as "dislocation maps" [@imai2023sc].
+Comparing a projective average to a particular plan (what we term a *projective contrast*) recalls the notion of *partisan dislocation* of @deford2022partisan, which can produce maps suggesting where gerrymandering is occurring locally.
+But there are key differences between the two techniques and their underlying goals.
+Partisan dislocation was specifically designed as a "simpler, far less computationally intensive alternative to computer simulations," which is calculated by averaging a variable number of precincts in a single map.
+Moreover, partisan dislocation is designed to identify and quantify U.S. partisan gerrymandering specifically, and as such applies only to two-party vote shares (though it could in principle be extended to other quantities).
+Projective averages, on the other hand, are a tool designed for simulation ensembles specifically, and may be applied to any summary statistic, such as compactness or racial composition.
+Thus projective averages are a complementary technique to partisan dislocation measures, rather than a replacement for them.
 
+Despite these differences, other authors have referred to projective contrast maps as "dislocation maps" [@imai2023sc].
 These studies and other similar work have all ignored the fundamental variation in precinct-projected summary statistics across plans in the ensemble.
-As explained in @sec-var, this variation, and not just the ensemble-wide average, must be incorporated into analyses to properly contextualize numerical results and avoid misleading conclusions.
-We provide concrete recommendations for visualizing projective averages to account for variation.
-@sec-concl concludes.
+As explained in @sec-var, some amount of discrepancy from the ensemble-wide average is to be expected in any given plan.
+This natural variation must be accounted for in order to properly contextualize numerical results and avoid incorrectly concluding that a particular part of a plan is an outlier.
+<!-- We provide concrete recommendations for visualizing projective averages to account for variation. -->
+<!-- @sec-concl concludes. -->
 
 # Formalizing Projective Averages {#sec-formal}
-
-We motivate and demonstrate the use of projective averages in a real-world context through a running example in the state of Oregon.
-Between the 2010 and 2020 redistricting cycles, Oregon Democrats gained unified control of state government.
-In 2021 the state adopted new congressional districts on a party-line vote that some viewed as a partisan gerrymander, though legal efforts to challenge the new map on these grounds were unsuccessful [@opbcase].
-
-Simulation algorithms can be used to study the extent of partisan gerrymandering in Oregon's 2021 districts by generating an ensemble of partisan-neutral districting plans.
-In general, districting plans are constructed out of precincts, counties, or other geographic "building blocks." Following the notation of @mccartan2023, we refer to the set of these geographic units (hereinafter "precincts" for simplicity) as $V$.
-A districting plan with $d$ districts is then a mapping $\xi:V \to \{1, 2, \dots, d\}$ from precincts to integer labels.
-Districting plans must satisfy a number of criteria, including equal population across districts, connectedness, and geographic compactness.
-We denote set of all valid districting plans by $\X$.
-
-A redistricting ensemble is a sample from some (usually known, but possibly unknown) probability distribution $\pi$ on $\X$.
-Here, we'll use an ensemble of 5,000 plans generated by @mccartan2022simulated using the algorithm of @mccartan2023.
-The target distribution for this sample prioritizes geographically compact districts among those plans which are contiguous and have all district populations within 0.5% of equality.
-Five sampled plans and the enacted districts are shown in @fig-ensemble.
-
-A district-level summary statistic $f:\X\to\R^d$ reports a value for each district in a plan.
-Generally $f$ is defined by $f(\xi)_j = g(\xi^{-1}(j))$ for some function $g:2^V\to\R$ that calculates a summary value for any set of precincts.
-For example, $g$ might calculate the typical Democratic vote share in a set of precincts.
-
-Letting $\Xi\sim\pi$ be a single randomly sampled plan, $f(\Xi)$ is the distribution of the summary statistic in the $n$ districts.
-If $\xi^0$ is the comparison plan of interest, the traditional district-level analysis compares $f(\xi^0)$ to the distribution $f(\Xi)$.
-In practice, analysts have access not to the full distribution $\pi$ but a finite ensemble $S=\{\xi_i\}_{i=1}^n$ for some $n$.
-
-The Oregon ensemble's distribution of the order statistics of the normal Democratic vote share are shown in @fig-distr-dshare, with the enacted plan's values marked for comparison.
-For most districts, the enacted plan's Democratic vote share lies in the tails of the simulated distribution, with an overall pattern that suggests the packing of Republican voters into one district and the cracking of Democratic voters in the most heavily Democratic district.
-However, since @fig-distr-dshare shows only order statistics, we are unable to localize any of these patterns or understand how they arise though particular choices made by the drawers of the enacted plan.
 
 ::: {#fig-proj layout="[[30, -2, 30, -2, 36], [48, -4, 48]]" layout-valign="top"}
 ![Enacted map and five sampled districting plans from the simulation ensemble.](figures/ensemble.pdf){#fig-ensemble}
@@ -116,95 +88,208 @@ However, since @fig-distr-dshare shows only order statistics, we are unable to l
 
 ![District-level Democratic vote shares projected to the precinct level by plan.](figures/proj_stacked.pdf){#fig-proj-stacked}
 
-![The projective average of Democratic vote share, with the enacted districs overlaid in black.](figures/proj_avg.pdf){#fig-proj-avg}
+![The projective average of Democratic vote share, with the enacted districts overlaid in black.](figures/proj_avg.pdf){#fig-proj-avg}
 
 ![The projective contrast of the enacted and ensemble Democratic vote share. Blue indicates areas assigned to a more Democratic district under the enacted plan than the average simulated plan.](figures/proj_contr.pdf){#fig-proj-contr}
 
-Simulation analysis and the process of producing a projective average and contrast.
+Simulation analysis (a)--(b) and the process of producing a projective average and contrast (c)--(e).
 :::
+
+We motivate and demonstrate the use of projective averages in a real-world context through a running example in the state of Oregon.
+Between the 2010 and 2020 redistricting cycles, Oregon Democrats gained unified control of state government.
+In 2021 the state adopted new congressional districts on a party-line vote that some viewed as a partisan gerrymander, though legal efforts to challenge the new map on these grounds were unsuccessful [@opbcase].
+
+Simulation algorithms can be used to study the extent of partisan gerrymandering in Oregon's 2021 districts by generating an ensemble of partisan-neutral districting plans.
+In general, districting plans are constructed out of precincts, counties, or other geographic "building blocks."
+We refer to the set of these geographic units (hereinafter "precincts" for simplicity) as $V$.
+A districting plan with $d$ districts is then a mapping $\xi:V \to \{1, 2, \dots, d\}$ from precincts to integer labels.
+Districting plans must satisfy a number of criteria, including equal population across districts, connectedness, and geographic compactness.
+We denote the set of all valid districting plans by $\X$.
+
+A district-level summary statistic $f:\X\to\R^d$ reports a value for each district in a plan.
+Generally $f$ is defined by $f(\xi)_j = g(\xi^{-1}(j))$ for some function $g:2^V\to\R$ that calculates a summary value for any set of precincts.
+For instance, $g$ might calculate the typical Democratic vote share in a set of precincts.
+
+A redistricting ensemble is a sample $S=\{\xi_i\}_{i=1}^n$ of size $n$ from some probability distribution $\pi$ on $\X$.
+Here, we'll use an ensemble of $n=5000$ plans generated by @mccartan2022simulated using the algorithm of @mccartan2023.
+The target distribution for this sample prioritizes geographically compact districts among those plans which are contiguous and have all district populations within 0.5% of equality.
+Five sampled plans and the enacted districts are shown in @fig-ensemble.
+
+The Oregon ensemble's distribution of the order statistics of the normal Democratic vote share are shown in @fig-distr-dshare, with the enacted plan's values marked for comparison.
+For most districts, the enacted plan's Democratic vote share lies in the tails of the simulated distribution, with an overall pattern that suggests the packing of Republican voters into one district and the cracking of Democratic voters in the most heavily Democratic district.
+However, since @fig-distr-dshare shows only order statistics, we are unable to localize any of these patterns to a sub-district scale.
+<!-- or understand how they arise though particular choices made by the drawers of the enacted plan. -->
 
 ## Projective distribution and average
 
 The projective average is designed to tackle these issues.
-We define the *projective distribution of* $f$ *at precinct* $v\in V$ as $$
-\proj_\pi f(v) \coloneq f(\Xi)_{\Xi(v)} \qor
-\proj_S f(v) \coloneq \{ f(\xi_i)_{\xi_i(v)} \}_{i=1}^n
-$$ in the population and for finite ensembles, respectively.
-In other words, the distribution of $f(\Xi)$ in the (random) district which $v$ belongs to.
-When $f$ is defined by a precinct-set summary function $g$, the projective distribution is equivalently defined by $\proj_\pi f = g\circ \Xi^{-1} \circ \Xi$, i.e., $g$ applied to the fiber of $\Xi$ containing $v$.
+We define the *projective distribution of* $f$ *at precinct* $v\in V$ as the distribution of $f$ in the district which $v$ belongs to, i.e., $$\proj_S f(v) \coloneq \{ f(\xi_i)_{\xi_i(v)} \}_{i=1}^n.$$
 
 The *projective average of* $f$ *at precinct* $v$ is then naturally defined as $$
-\bar{f}_\pi(v) \coloneq \E[\proj_\pi f(v)] = \E[f(\Xi)_{\Xi(v)}] \qand
 \bar{f}_S(v) \coloneq \frac{1}{n} \sum_{i=1}^n f(\xi_i)_{\xi_i(v)}.
-$$ Thus while the district-level distribution of $f$ is supported on $\R^n$, the projective distribution $\proj_\pi f$ is supported on $\R^{|V|}$, and the projective average $\bar f$ assigns each precinct a single value, allowing it to be plotted on a map.
+$$ Thus while the district-level distribution of $f$ is supported on $\R^n$, the projective distribution $\proj_S f$ is supported on $\R^{|V|}$, and the projective average $\bar f$ assigns each precinct a single value, allowing it to be plotted on a map.
 
 @fig-proj-stacked shows a sample of four elements from the projective distribution of normal Democratic vote share, and @fig-proj-avg plots the projective average, which is the result of averaging across the maps in @fig-proj-stacked and the 4,996 others in the ensemble.
-Unsurprisingly, the areas in and around Portland in the northwest of the state typically belong to heavily Democratic districts, while the southern Willamette Valley typically belongs to a swing district, and the rural south and east of the state belongs to a safely Republican district, on average.
+Because of the need to group voters into districts, the projective average appears to "smooth out" the partisan geography of the state
+<!-- Unsurprisingly, the areas in and around Portland in the northwest of the state typically belong to heavily Democratic districts, while the southern Willamette Valley typically belongs to a swing district, and the rural south and east of the state belongs to a safely Republican district, on average. -->
 
 ## Projective contrasts
 
 The same projection operation applied to an ensemble to yield the projective distribution and average can be applied to a single redistricting plan.
 Here, the operation simply maps each precinct to the value of the summary statistic in its corresponding district.
-Thus $\proj_{\{\xi^0\}} f$ can be identified with $\bar{f}_{\{\xi^0\}}$ , each of which can take on at most $d$ values.
+Thus, for the enacted plan $\xi^0$, we can identify $\proj_{\{\xi^0\}} f$ with $\bar{f}_{\{\xi^0\}}$, each of takes on at most $d$ values.
 
 A traditional district-level analysis compares $f(\xi^0)$ with $f(S)$.
-The analogue with projective averages is the *projective contrast*, defined as $\bar{f}_{\{\xi^0\}} - \bar{f}_S$.
-Intuitively, the projective contrast reports how much higher or lower $f$ is in the enacted plan than the average simulated plan.
-For example, if $f$ measures districts' compactness (higher values indicating more compactness), then $\bar{f}_{\{\xi^0\}} - \bar{f}_S$ would be positive in regions of the state that belong to more compact districts under the enacted plan than under the typical plan from the ensemble.
+The analogue with projective averages is the *projective contrast*, formally defined as $\bar{f}_{\{\xi^0\}} - \bar{f}_S$.
+Intuitively, it reports how much higher or lower $f$ is in the enacted plan than the average simulated plan.
+For example, if $f$ measures districts' compactness, then the projective contrast would be positive in regions of the state that belong to more compact districts under the enacted plan than under the typical plan from the ensemble.
 
 @fig-proj-contr plots the projective contrast of normal Democratic vote share.
 Blue areas have positive values of the contrast and correspond to precincts belonging to a more Democratic district in the enacted plan than the average simulated plan.
 While small on the statewide map, the city of Portland is red, indicating it is assigned to a less Democratic district under the enacted map, while the areas surrounding Portland and extending down the coast are blue.
 Meanwhile, the south and east of the state are more Republican than would otherwise be expected.
-This overall pattern is consistent with the "crack heavily Democratic areas, pack Republican areas" pattern observed in the order statistic boxplots, but the projective contrast map allows us to confirm the pattern and see exactly where the packing and cracking are taking place.
+This overall pattern is consistent with the "crack heavily Democratic areas, pack Republican areas" strategy inferred from the boxplots, but the projective contrast map allows us to confirm the pattern and see exactly where the packing and cracking are occurring.
 
-## Aggregating projective averages and contrasts
-
-Projective averages and contrasts can also be re-aggregated to larger geographies as a way of further summarizing the very granular results of projective averaging.
-Aggregation is accomplished by taking a population or voting-population weighted average of the projective average or contrast across precincts.
-Formally, given a function $q:V\to\N$ that labels regions of the map, we can define an *aggregated projective average* as $$
-\bar{F}^q_S(j) \coloneq \frac{\sum_{v\in q^{-1}(j)} w_v \bar{f}_S(v)}{\sum_{v\in q^{-1}(j)} w_v}
-$$ for each $j$ in the range of $q$ and for some inverse-population weights $\{w_v\}_{v\in V}$.
-Analogous definitions are naturally made for population projective averages $\bar{f}_\pi$ and for projective contrasts such as $\bar{f}_{\{\xi^0\}} - \bar{f}_S$.
-
-@kenny2023widespread (Figure 2) take projective contrasts of the Democratic win probability and then aggregate these contrasts up to the congressional district level to form a national accouting of partisan effects in each district.
-The use of aggregated projective contrasts means that effects can be well-defined and calculated for each enacted district, even though the underlying simulation ensembles involve tens of thousands of completely different, non-overlapping districts.
+Projective averages and contrasts can also be re-aggregated to larger geographies as a way of further summarizing the granular results of projective averaging.
+This technique is formalized and demonstrated in [Appendix @sec-app-agg].
+Population-level analogues of all of these definitions are in [Appendix @sec-app-pop].
 
 # Accounting for Variation Across the Ensemble {#sec-var}
 
 Calculating a projective average requires compressing the entire projective distribution over each precinct to a single number: its mean.
-One side effect of this averaging step is to lose information about how unusual a particular value for the projective average in a precinct is. For instance, a plan that is more or less Democratic than the average simulated plan may not be a partisan gerrymander or even an outlier in the projective distriution.
+One side effect of this averaging step is to lose information about how unusual a particular value for the projective average in a precinct is.
+For instance, a plan that is more or less Democratic than the average simulated plan may not be a partisan gerrymander or even an outlier in the projective distribution.
 Informally, we would actually *expect the typical map to be atypical* in some areas of the state.
 
 ![Projective contrasts of seven randomly sampled districting plans and the enacted plan versus the simulated ensemble.](figures/contr_samp.pdf){#fig-contr-samp}
 
 @fig-contr-samp illustrates the problem.
 The projective contrast of Democratic vote share has been calculated, not just for the enacted plan, but for seven draws from the ensemble as well.
-We invite the reader to guess which of the eight plans is in fact the enacted.\footnote{\rotatebox[origin=c]{180}{The enacted plan is in the upper right corner.}}
-The difficulty of this task illustrates that the enacted plan may not be an outlier along the dimensions plotted by the projective contrast.
-Put differently, without accounting for the expected variation in projective averages and contrasts across the ensemble, analysts may be misled in their interpretations.
+We invite the reader to guess which of the eight plans is in fact the enacted.\footnote{\rotatebox[origin=c]{180}{The enacted plan is in the upper right corner.}} The difficulty of this task illustrates that the enacted plan may not be an outlier along the dimensions plotted by the projective contrast.
+Put differently, without accounting for the expected variation in projective averages and contrasts across the ensemble, analysts may incorrectly claim that a plan or district is gerrymandered, or unusually noncompact, or so on.[^1]
+
+[^1]: Of course, if an omnibus statistical test has already been performed to establish that the enacted map is an outlier, the approaches advanced here may not be necessary.
+    Projective contrasts and averages can illustrate or explain features of the plan, showing the "how" of a gerrymander whose existence has been rigorously established by other means.
+    But the natural tendency to notice unusual patterns in a map may lead to informal conclusions about "outlier regions" of the map that would be better made in consultation with the techniques outlined here.
+    
+Informal graphical approaches for addressing this problem are discussed in [Appendix @sec-app-graphic].
+Here, we propose a more formal way of testing when a projective contrast indicates deviations beyond what would be expected for a random sample from the target distribution, using multiple testing methodology from @storey2001estimating [hereinafter ST].
+The ST method is designed to estimate and thereby control the *positive False Discovery Rate* (pFDR), defined as $$
+\mathrm{pFDR} \coloneq \E\left[\frac{\text{false discoveries}}{\text{total discoveries}}\gvn \text{total discoveries} > 0\right],
+$$ for a collection of valid but possibly dependent p-values.
+We can obtain a valid p-value for each precinct in the map by comparing the projected value for the enacted map to the projective distribution at that precinct.
+
+![Projective contrast of the enacted and ensemble Democratic vote share. Significant discrepancies from the ensemble after controlling the pFDR at 1% (left) and 5% (right) are marked by the hatched areas.](figures/fdr_ctrl.pdf){#fig-fdr-ctrl}
+
+The ST methodology can be used to define a procedure, detailed in [Appendix @sec-app-st], that takes the set of p-values for all the precincts and returns a subset of "discovered" precincts for which the enacted map can be considered to differ significantly from the ensemble.
+Control of the pFDR at (say) the 10% level means that, informally, at most 10% of the selected precincts can be expected to in fact not be true departures from the ensemble's projective distribution (false discoveries).
+Compared to more familiar FDR control approaches like the Benjamini-Hochberg (BH) procedure, the ST procedure handles arbitrary dependence while maintaining high statistical power.
+As [Appendix @sec-app-fwer] demonstrates, in the redistricting setting the ST procedure is able to control the pFDR at a range of levels under the global null distribution without being overly conservative.
+
+@fig-fdr-ctrl demonstrates the ST methodology for two different pFDR control levels, with the selected precincts hatched.
+Almost all of the state is selected at the 5% level, indicating that the observed discrepancies measured by the projective contrast go beyond what would be reasonably expected by random variation in the null distribution.
+In contrast, *none* of the simulated plans in @fig-contr-samp are selected by the ST procedure, indicating that those discrepancies, while visually of similar magnitude to the enacted plan, are in fact within the expected range.
+
+# Conclusion {#sec-concl}
+
+We have introduced the projective average and contrast as a technique for visualizing and understanding district-level summary statistics calculated from a redistricting simulation.
+While the illustrative example here used Democratic vote share, we stress that projective averages are useful far beyond studies of partisan gerrymandering, and can be applied to any district-level summary, including compactness scores or win probabilities.
+[Appendix @sec-app-fdr-ex] contains demonstrations for some of these other quantities.
+<!-- The ability to re-aggregate projective averages and contrasts to other geographies is particularly useful in allowing analysts to summarize thousands of redistricting plans for predefined sub-state geographies that may not be nested within any simulated district. -->
+Re-aggregating projective averages to predefined sub-state geographies, as demonstrated in [Appendix @sec-app-agg], is also particularly useful.
+
+No matter how the projective operation is used, it is important to consider sampling variability and use caution before drawing statistical conclusions---just as when working with district-level summary statistics.
+We have proposed a statistical method for doing so, which we recommend for routine work with projective averages and contrasts.
 
 
-## Graphical approaches
+# Population projective averages and contrasts {#sec-app-pop .appendix}
 
-One simple, if not particularly formalized, way to address this problem is by using something exactly like @fig-contr-samp, where the 'true' projective contrast or average is displayed among a number of 'null' averages that provide appropriate comparative context.
-Indeed, following the "lineup procedure" of @buja2009statistical, analysts may benefit from initially randomizing the location of the true contrast and attempting to identify it as a visual outlier.
+Projective averages and contrasts can be defined for the overall population distribution $\pi$ of districting plans rather than for a finite ensemble $S$.
+
+Letting $\Xi\sim\pi$ be a single randomly sampled plan, $f(\Xi)$ is the distribution of the summary statistic in the $n$ districts.
+If $\xi^0$ is the comparison plan of interest, the traditional district-level analysis compares $f(\xi^0)$ to the distribution $f(\Xi)$.
+As noted in the main text, in practice, analysts have access not to the full distribution $\pi$ but a finite ensemble $S=\{\xi_i\}_{i=1}^n$ for some $n$.
+
+We define the population projective distribution of $f$ at precinct $v\in V$ as $$\proj_\pi f(v) \coloneq f(\Xi)_{\Xi(v)}.$$ 
+In other words, the distribution of $f(\Xi)$ in the (random) district which $v$ belongs to.
+When $f$ is defined by a precinct-set summary function $g$, the projective distribution is equivalently defined by $\proj_\pi f = g\circ \Xi^{-1} \circ \Xi$, i.e., $g$ applied to the fiber of $\Xi$ containing $v$.
+The population projective average of $f$ at precinct $v$ is then naturally defined as $$\bar{f}_\pi(v) \coloneq \E[\proj_\pi f(v)] = \E[f(\Xi)_{\Xi(v)}],$$ and the projective contrast as $\bar{f}_{\{\xi^0\}} - \bar{f}_\pi(v)$.
+
+# Aggregating projective averages and contrasts {#sec-app-agg .appepndix}
+
+Projective averages and contrasts can also be re-aggregated to larger geographies as a way of further summarizing the very granular results of projective averaging.
+Aggregation is accomplished by taking a population or voting-population weighted average of the projective average or contrast across precincts.
+Formally, given a function $q:V\to\N$ that labels regions of the map, we can define an *aggregated projective average* as $$
+\bar{F}^q_S(j) \coloneq \frac{\sum_{v\in q^{-1}(j)} w_v \bar{f}_S(v)}{\sum_{v\in q^{-1}(j)} w_v}
+$$ for each $j$ in the range of $q$ and for some population weights $\{w_v\}_{v\in V}$.
+Analogous definitions are naturally made for population projective averages $\bar{f}_\pi$ and for projective contrasts such as $\bar{f}_{\{\xi^0\}} - \bar{f}_S$.
+
+@kenny2023widespread [Figure 2] take projective contrasts of the Democratic win probability and then aggregate these contrasts up to the congressional district level to form a national accounting of partisan effects in each district.
+The use of aggregated projective contrasts means that effects can be well-defined and calculated for each enacted district, even though the underlying simulation ensembles involve thousands of completely different, non-overlapping districts.
+
+![Precinct-level projective contrast for normal Democratic vote share (left), and aggregated to the enacted districts (right).](figures/proj_agg.pdf){#fig-proj-agg}
+
+We demonstrate this same idea for the Oregon ensemble in @fig-proj-agg.
+Voters in blue districts on average belong to a more Democratic district than would otherwise be expected from the ensemble.
+Thus district 4 in the southwest appears to have been gerrymandered to be more Democratic, while district 2 in the east appears to have been gerrymandered to be more Republican.
+
+# Storey-Tibshirani pFDR control procedure for projective contrasts {#sec-app-st .appendix}
+
+We combine Algorithm 1 of @storey2001estimating, which can be applied to any set of dependent p-values, with a final search step to identify the rejection region that is expected to control the pFDR at the requested level.
+Storey and Tibshirani justify the procedure theoretically (i.e., that it controls the FDR in the large-$|V|$ limit) in their article for "clumpy" dependence that would be expected in redistricting problems.
+Empirical validation of this approach is provided in [Appendix @sec-app-fwer] for the Oregon ensemble.
+The algorithm with our choice of its tuning parameter is detailed below for completeness.
+
+Let $$
+p_v(\xi) \coloneq \frac{1+\#\{\xi'\in S:f(\xi')_{\xi'(v)} \ge f(\xi)_{\xi(v)}\}}{n}
+$$ be the p-value for the plan $\xi$ in the projective distribution $\proj_S f(v)$ for a precinct $v\in V$, where $\#\{\cdot\}$ indicates the cardinality of a set.
+Then we can calculate the observed p-value $p_v(\xi^0)$ for the enacted plan as well as $n$ null p-values $\{p_v(\xi_i)\}_{i=1}^n$ for each precinct.
+
+For a threshold $\gamma\in[0,1]$, let $R(\gamma)\coloneq \#\{v\in V: p_v(\xi^0)\le\gamma\}$ be the number of (actual) precinct p-values at or below the threshold.
+Define the following average number of null rejections for a given threshold $\gamma$ by $$
+\bar R_0(\gamma) \coloneq \frac{1}{n}\sum_{i=1}^n \#\{v\in V: p_v(\xi_i)\le\gamma\}.
+$$
+
+Then estimate the fraction of false discoveries as $$
+\widehat\pi_0 = \frac{|V| - R(0.5)}{|V| - {\bar R_0}(0.5)}.
+$$
+
+For any $\gamma\in[0,1]$, estimate the pFDR for thresholding the p-values at $\gamma$ by $$
+\widehat{\mathrm{pFDR}}(\gamma) = \frac{\widehat\pi_0 {\bar R_0}(\gamma)}{R(\gamma)}.
+$$ To control the pFDR at a chosen level $\alpha\in[0,1]$, select all p-values at or below $$
+\hat\gamma \coloneq \max\{\gamma\in[0,1] : \widehat{\mathrm{pFDR}}(\gamma)\le \alpha\}.
+$$ In practice, this may be achieved by calculating $\widehat{\mathrm{pFDR}}(\gamma)$ across a few dozen $\gamma$ and then interpolating linearly or with a monotone cubic spline.
+The replication code takes this approach.
+
+# Empirical performance of pFDR control method in the null distribution {#sec-app-fwer .appendix}
+
+![Family-wise error rate across a range of nominal pFDR control levels for the procedure described in @sec-var applied to the global null distribution from the simulated ensemble.](figures/fwer_null.pdf){#fig-fwer-null}
+
+When the global null hypothesis (that the enacted map was generated from the same distribution as the ensemble) is true, pFDR control also implies control of the *family-wise error rate* (FWER), the probability that any of the discoveries is false.
+FWER control can be checked by applying the procedure to samples from the null distribution---the simulated ensemble.
+This is done in @fig-fwer-null for a range of nominal pFDR/FWER thresholds and for four different test statistics.
+At no point does the actual FWER exceed the nominal pFDR threshold.
+Importantly, however, the procedure is also not overly conservative, with the observed FWER falling just below the nominal pFDR level.
+
+# Graphical methods for accounting for variation in the projective distribution {#sec-app-graphic .appendix}
+
+One simple, if not particularly formalized, way to address the problem of variation in projective distributions is by using something exactly like @fig-contr-samp, where the 'true' projective contrast or average is displayed among a number of 'null' averages that provide appropriate comparative context.
+Indeed, following the "lineup procedure" of @buja2009statistical analysts may benefit from initially randomizing the location of the true contrast and attempting to identify it as a visual outlier.
 
 A complementary approach is to normalize the projective contrast precinct-wise by the standard deviation of the projective distribution at each precinct.
 This has the effect of generating precinct-level z-scores for the contrast of interest.
 Areas with relatively high variation in the projective distribution will stand out less than before normalization.
-A side-by-side example of this approach is illustrated in **FIGURE**.
+A version of @fig-contr-samp with the projective contrast normalized in this way is shown in @fig-samp-norm.
 
-## A signal localization and multiple testing approach
+![Normalized projective contrasts of seven randomly sampled districting plans and the enacted plan versus the simulated ensemble. The pFDR control procedure has been applied to all eight plans, with selected areas hatched.](figures/contr_samp_norm.pdf){#fig-samp-norm}
 
-For researchers desiring a more formal way of testing when a projective contrast indicates deviations beyond what would be expected for a random sample from the target distribution, we borrow methodology from the multiple comparisons and signal localization literature.
+# Projective contrasts for other summary statistics in Oregon {#sec-app-fdr-ex .appendix}
 
-# Conclusion {#sec-concl}
+@fig-fdr-addl-ex shows the projective contrast maps for three additional district-level summary statistics: the Polsby-Popper compactness score, the American Indian / Alaska Native population, and the White voting-age population.
+While the compactness projective contrast initially appears to indicate that in many areas the enacted plan is more or less compact than the typical ensemble plan, the pFDR control procedure indicates that these differences are within the expected range.
+In contrast, the racial composition of parts of districts in the south, center, and north in the enacted plan are significantly different from the composition of the corresponding areas under the ensemble, as is clear from the pFDR-controlled projective contrasts of AI/AN population and White VAP.
 
-As we have stressed, projective averages are useful far beyond studies of partisan gerrymandering, and can be applied to any district-level summary, including compactness scores or win probabilities.
-More complex extensions are possible too.
-@mccartan2022individual develop a framework of individual harm in redistricting.
-Harm is calculated along the lines of a projective contrast of win probabilities and measures the probability that a typical voter is "mis-represented" in their district to their detriment.
+We stress that these results are only preliminary, and that (pFDR-controlled) statistical significance, or lack thereof, does not mean that the observed values of the projective contrast are large or small in any absolute, substantive sense.
+Projective averages and contrasts are a useful exploratory and interpretive tool regardless of the number of areas selected by the ST procedure at a particular level of pFDR control.
 
-::: {#refs}
-:::
+![Projective contrast of the enacted plan in Oregon for three different summary statistics. Significant discrepancies from the ensemble after controlling the pFDR at 5% are marked by the hatched areas. The enacted districts are indicated by the black borders.](figures/fdr_addl_ex.pdf){#fig-fdr-addl-ex}
