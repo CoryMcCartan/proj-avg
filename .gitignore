@@ -50,5 +50,5 @@ docs
 *.dll
 
 # Additional rules (some may be added automatically)
-paper/prec-avg.tex
+paper/proj-avg.tex
 arxiv/
