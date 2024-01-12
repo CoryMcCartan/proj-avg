@@ -32,7 +32,7 @@ date: last-modified
 thanks: The author thanks Christopher T. Kenny and Kosuke Imai for helpful comments.
 format: 
   cmc-article-pdf:
-    keep-tex: false
+    keep-tex: true
     journal:
       blinded: false
     include-in-header: header.tex
