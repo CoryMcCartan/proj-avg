@@ -1,5 +1,7 @@
 # Projective Averages for Summarizing Redistricting Ensembles
 
+[![](https://img.shields.io/badge/arXiv-2401.06381-b31b1b)](https://arxiv.org/abs/2401.06381)
+
 A recurring challenge in the application of redistricting simulation algorithms
 lies in extracting useful summaries and comparisons from a large ensemble of
 districting plans. Researchers often compute summary statistics for each
